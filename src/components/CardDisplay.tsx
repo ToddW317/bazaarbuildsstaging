@@ -21,7 +21,15 @@ import {
   Droplet,
   Timer,
   BadgeAlert,
-  Coins
+  Coins,
+  Wrench,
+  Package,
+  Ban,
+  Tags,
+  Gem,
+  Car,
+  Beaker,
+  Home,
 } from 'lucide-react';
 import { parseCardTooltip } from '@/utils/cardTooltipFormatter';
 import { formatCardValue } from '@/utils/formatters';
@@ -53,6 +61,122 @@ interface TierData {
   Tooltips?: string[];
   [key: string]: any;
 }
+
+type ItemTag = {
+  type: string;
+  icon: React.ComponentType<any>;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+};
+
+const getItemTags = (item: Item): ItemTag[] => {
+  const tags: ItemTag[] = [];
+  
+  // Add tags from the item's Tags array
+  if (item.Tags && Array.isArray(item.Tags)) {
+    item.Tags.forEach(tag => {
+      switch(tag) {
+        case 'Friend':
+          tags.push({
+            type: "Friend",
+            icon: Crown,
+            color: "#f472b6", // pink-400
+            bgColor: "rgba(244, 114, 182, 0.1)",
+            borderColor: "rgba(244, 114, 182, 0.2)"
+          });
+          break;
+        case 'Tool':
+          tags.push({
+            type: "Tool",
+            icon: Wrench,
+            color: "#60a5fa", // blue-400
+            bgColor: "rgba(96, 165, 250, 0.1)",
+            borderColor: "rgba(96, 165, 250, 0.2)"
+          });
+          break;
+        case 'Core':
+          tags.push({
+            type: "Core",
+            icon: Gem,
+            color: "#c084fc", // purple-400
+            bgColor: "rgba(192, 132, 252, 0.1)",
+            borderColor: "rgba(192, 132, 252, 0.2)"
+          });
+          break;
+        case 'Weapon':
+          tags.push({
+            type: "Weapon",
+            icon: Swords,
+            color: "#ef4444", // red-500
+            bgColor: "rgba(239, 68, 68, 0.1)",
+            borderColor: "rgba(239, 68, 68, 0.2)"
+          });
+          break;
+        case 'Aquatic':
+          tags.push({
+            type: "Aquatic",
+            icon: Droplet,
+            color: "#38bdf8", // sky-400
+            bgColor: "rgba(56, 189, 248, 0.1)",
+            borderColor: "rgba(56, 189, 248, 0.2)"
+          });
+          break;
+        case 'Vehicle':
+          tags.push({
+            type: "Vehicle",
+            icon: Car,
+            color: "#a78bfa", // violet-400
+            bgColor: "rgba(167, 139, 250, 0.1)",
+            borderColor: "rgba(167, 139, 250, 0.2)"
+          });
+          break;
+        case 'Potion':
+          tags.push({
+            type: "Potion",
+            icon: Beaker,
+            color: "#4ade80", // green-400
+            bgColor: "rgba(74, 222, 128, 0.1)",
+            borderColor: "rgba(74, 222, 128, 0.2)"
+          });
+          break;
+        case 'Property':
+          tags.push({
+            type: "Property",
+            icon: Home,
+            color: "#fbbf24", // amber-400
+            bgColor: "rgba(251, 191, 36, 0.1)",
+            borderColor: "rgba(251, 191, 36, 0.2)"
+          });
+          break;
+      }
+    });
+  }
+  
+  // Add special attribute-based tags
+  if (item.Tiers?.[item.StartingTier || 'Bronze']?.sellPrice === 0) {
+    tags.push({
+      type: "Unsellable",
+      icon: Ban,
+      color: "#ef4444", // red-500
+      bgColor: "rgba(239, 68, 68, 0.1)",
+      borderColor: "rgba(239, 68, 68, 0.2)"
+    });
+  }
+
+  // If no tags, add default Item tag
+  if (tags.length === 0) {
+    tags.push({
+      type: "Item",
+      icon: Package,
+      color: "#4ade80", // green-400
+      bgColor: "rgba(74, 222, 128, 0.1)",
+      borderColor: "rgba(74, 222, 128, 0.2)"
+    });
+  }
+
+  return tags;
+};
 
 export default function CardDisplay({ item, itemId }: CardDisplayProps) {
   const [selectedTier, setSelectedTier] = useState<string>(item.StartingTier || 'Bronze');
@@ -220,6 +344,69 @@ export default function CardDisplay({ item, itemId }: CardDisplayProps) {
                 {item.Heroes[0]}
               </span>
             )}
+
+            {/* Item Type Tags */}
+            {(() => {
+              const itemTags = getItemTags(item);
+              if (itemTags.length <= 1) {
+                // If only one tag, show it directly
+                const tag = itemTags[0];
+                return (
+                  <span 
+                    className="px-3 py-1 rounded flex items-center gap-1.5 text-sm font-medium"
+                    style={{ 
+                      backgroundColor: tag.bgColor,
+                      color: tag.color
+                    }}
+                  >
+                    <tag.icon className="w-4 h-4" />
+                    {tag.type}
+                  </span>
+                );
+              }
+              
+              // If multiple tags, show them in a dropdown
+              return (
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <div className="px-3 py-1 bg-gray-500/20 rounded flex items-center gap-1.5 text-sm text-gray-300 hover:bg-gray-500/30 transition-colors">
+                        <Tags className="w-4 h-4" />
+                        {itemTags.length} Tags
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent 
+                      side="bottom" 
+                      className="bg-gray-800/95 border border-gray-700 p-2"
+                    >
+                      <div className="flex flex-col gap-2">
+                        {itemTags.map((tag) => (
+                          <div 
+                            key={tag.type}
+                            className="flex items-center gap-2 p-2 rounded border"
+                            style={{
+                              backgroundColor: tag.bgColor,
+                              borderColor: tag.borderColor
+                            }}
+                          >
+                            <tag.icon 
+                              style={{ color: tag.color }} 
+                              className="w-4 h-4 flex-shrink-0" 
+                            />
+                            <span 
+                              style={{ color: tag.color }} 
+                              className="font-medium"
+                            >
+                              {tag.type}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              );
+            })()}
 
             {/* Enchantments Dropdown */}
             {item.Enchantments && typeof item.Enchantments === 'object' && Object.keys(item.Enchantments).length > 0 && (
