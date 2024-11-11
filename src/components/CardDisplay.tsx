@@ -48,6 +48,12 @@ type EnchantmentTooltipProps = {
   enchantData: EnchantmentType;
 };
 
+interface TierData {
+  Attributes?: Record<string, any>;
+  Tooltips?: string[];
+  [key: string]: any;
+}
+
 export default function CardDisplay({ item, itemId }: CardDisplayProps) {
   const [selectedTier, setSelectedTier] = useState<string>(item.StartingTier || 'Bronze');
   const [imageError, setImageError] = useState(false);
@@ -81,8 +87,8 @@ export default function CardDisplay({ item, itemId }: CardDisplayProps) {
     }
   }
 
-  const renderTooltip = (tooltip: string, attributes: Record<string, any>) => {
-    const segments = parseCardTooltip(tooltip, attributes)
+  const renderTooltip = (tooltip: string, attributes: Record<string, any> | undefined) => {
+    const segments = parseCardTooltip(tooltip, attributes || {})
 
     return (
       <div className="flex flex-wrap items-start gap-x-1.5 gap-y-1 text-base leading-relaxed">
@@ -98,15 +104,12 @@ export default function CardDisplay({ item, itemId }: CardDisplayProps) {
     )
   }
 
-  const getAllTooltips = (tierData: any) => {
+  const getAllTooltips = (tierData: TierData) => {
     const tooltips: string[] = [];
     
     // Main tooltips
     if (Array.isArray(tierData.Tooltips)) {
-      const validTooltips = tierData.Tooltips
-        .filter((t: unknown): t is string => typeof t === 'string')
-        .filter((t: string) => t.trim() !== '');
-      tooltips.push(...validTooltips);
+      tooltips.push(...tierData.Tooltips.filter(t => typeof t === 'string' && t.trim() !== ''));
     }
     
     // Additional tooltip arrays
@@ -114,10 +117,7 @@ export default function CardDisplay({ item, itemId }: CardDisplayProps) {
       if (key.toLowerCase().includes('tooltip') && 
           key !== 'Tooltips' && 
           Array.isArray(value)) {
-        const validTooltips = (value as unknown[])
-          .filter((t: unknown): t is string => typeof t === 'string')
-          .filter((t: string) => t.trim() !== '');
-        tooltips.push(...validTooltips);
+        tooltips.push(...value.filter(t => typeof t === 'string' && t.trim() !== ''));
       }
     });
 
@@ -222,7 +222,7 @@ export default function CardDisplay({ item, itemId }: CardDisplayProps) {
             )}
 
             {/* Enchantments Dropdown */}
-            {item.Enchantments && Object.keys(item.Enchantments).length > 0 && (
+            {item.Enchantments && typeof item.Enchantments === 'object' && Object.keys(item.Enchantments).length > 0 && (
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger>
@@ -289,27 +289,6 @@ export default function CardDisplay({ item, itemId }: CardDisplayProps) {
               ))}
             </div>
           </div>
-
-          {/* Enchantments Section */}
-          {item.Enchantments && item.Enchantments.length > 0 && (
-            <div className="border-t border-gray-600/50 pt-3 mt-3">
-              <h3 className="text-sm font-semibold text-purple-400 mb-2 flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                Enchantments
-              </h3>
-              <div className="space-y-1.5">
-                {item.Enchantments.map((enchant, index) => (
-                  <div 
-                    key={index}
-                    className="text-sm text-gray-300 flex items-center gap-2 bg-purple-500/10 rounded px-2 py-1"
-                  >
-                    <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                    {enchant}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Attributes Grid */}
           {currentTierData.Attributes && Object.keys(currentTierData.Attributes).length > 0 && (
