@@ -29,11 +29,24 @@ import { getItemImagePath } from '@/utils/imageUtils';
 import PlaceholderImage from '@/components/PlaceholderImage';
 import EnchantmentBadge from './EnchantmentBadge';
 import React from 'react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ENCHANTMENTS } from './EnchantmentsDisplay';
+import type { EnchantmentType } from './EnchantmentsDisplay';
 
 interface CardDisplayProps {
   item: Item;
   itemId: string;
 }
+
+type EnchantmentTooltipProps = {
+  enchantName: string;
+  enchantData: EnchantmentType;
+};
 
 export default function CardDisplay({ item, itemId }: CardDisplayProps) {
   const [selectedTier, setSelectedTier] = useState<string>(item.StartingTier || 'Bronze');
@@ -208,14 +221,59 @@ export default function CardDisplay({ item, itemId }: CardDisplayProps) {
               </span>
             )}
 
-            {/* Enchantment Badges */}
-            {item.Enchantments && Object.entries(item.Enchantments).map(([enchantName, enchantData]) => (
-              <EnchantmentBadge 
-                key={enchantName} 
-                enchantmentName={enchantName}
-                className="ml-0.5" 
-              />
-            ))}
+            {/* Enchantments Dropdown */}
+            {item.Enchantments && Object.keys(item.Enchantments).length > 0 && (
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <div className="px-3 py-1 bg-purple-500/20 rounded flex items-center gap-1.5 text-sm text-purple-300 hover:bg-purple-500/30 transition-colors">
+                      <Sparkles className="w-4 h-4" />
+                      {Object.keys(item.Enchantments).length} Enchant{Object.keys(item.Enchantments).length !== 1 ? 's' : ''}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent 
+                    side="bottom" 
+                    className="bg-gray-800/95 border border-gray-700 p-2 w-[500px]"
+                  >
+                    <div className="grid grid-cols-2 gap-2">
+                      {Object.entries(item.Enchantments).map(([enchantName]) => {
+                        const enchantData = ENCHANTMENTS[enchantName];
+                        if (!enchantData) return null;
+                        
+                        return (
+                          <div 
+                            key={enchantName}
+                            className="flex items-start gap-2 p-2 rounded border"
+                            style={{
+                              backgroundColor: enchantData.bgColor,
+                              borderColor: enchantData.borderColor
+                            }}
+                          >
+                            <enchantData.Icon 
+                              style={{ color: enchantData.color }} 
+                              className="w-4 h-4 flex-shrink-0 mt-0.5" 
+                            />
+                            <div className="flex-1">
+                              <span 
+                                style={{ color: enchantData.color }} 
+                                className="font-medium block text-sm"
+                              >
+                                {enchantData.Name}
+                              </span>
+                              {enchantData.Tooltips.map((tooltip: string, i: number) => (
+                                <span key={i} className="text-xs text-gray-300 block">
+                                  {tooltip}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
 
           {/* Description/Tooltips Section with Scrolling */}

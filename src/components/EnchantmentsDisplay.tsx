@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/tooltip";
 
 // Define the enchantment type
-type EnchantmentType = {
+export type EnchantmentType = {
   Name: string;
   Tooltips: string[];
   Icon: React.ComponentType<any>;
